@@ -17,6 +17,7 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include <QListView>
+#include <QProgressBar>
 #include <QRegularExpression>
 #include <QScrollArea>
 #include <QShortcut>
@@ -37,6 +38,8 @@
 
 #include <Solid/Device>
 #include <Solid/Processor>
+#include <ThreadWeaver/ThreadWeaver>
+#include <kio_version.h>
 
 #include "hotspot-config.h"
 
@@ -44,6 +47,7 @@
 #include "perfoutputwidgetkonsole.h"
 #include "perfoutputwidgettext.h"
 #include "perfrecord.h"
+#include "perfrecordssh.h"
 
 namespace {
 bool isIntel()
@@ -175,6 +179,21 @@ RecordPage::RecordPage(QWidget* parent)
         scrollArea->setWidgetResizable(true);
 
         ui->setupUi(contents);
+    }
+
+    {
+        m_loadingIndicator = new QWidget(this);
+        m_loadingIndicator->setMinimumHeight(100);
+        m_loadingIndicator->setVisible(false);
+        m_loadingIndicator->setToolTip(tr("Detecting perf features via ssh..."));
+        auto layout = new QVBoxLayout(m_loadingIndicator);
+        layout->setAlignment(Qt::AlignCenter);
+        auto progressBar = new QProgressBar(m_loadingIndicator);
+        layout->addWidget(progressBar);
+        progressBar->setMaximum(0);
+        auto label = new QLabel(m_loadingIndicator->toolTip(), m_loadingIndicator);
+        label->setAlignment(Qt::AlignCenter);
+        layout->addWidget(label);
     }
 
     auto completion = ui->applicationName->completionObject();
@@ -312,41 +331,83 @@ RecordPage::RecordPage(QWidget* parent)
         ui->stackSizeLabel->setVisible(isDwarf);
     });
 
-    connect(m_perfRecord, &PerfRecord::recordingStarted, this,
-            [this](const QString& perfBinary, const QStringList& arguments) {
-                m_recordTimer.start();
-                m_updateRuntimeTimer->start();
-                appendOutput(QLatin1String("$ ") + perfBinary + QLatin1Char(' ') + arguments.join(QLatin1Char(' '))
-                             + QLatin1Char('\n'));
-                m_perfOutput->enableInput(true);
-            });
+    auto perfRecordChanged = [this] {
+        Q_ASSERT(QThread::currentThread() == this->thread());
+        connect(m_perfRecord, &PerfRecord::recordingStarted, this,
+                [this](const QString& perfBinary, const QStringList& arguments) {
+                    m_recordTimer.start();
+                    m_updateRuntimeTimer->start();
+                    appendOutput(QLatin1String("$ ") + perfBinary + QLatin1Char(' ') + arguments.join(QLatin1Char(' '))
+                                 + QLatin1Char('\n'));
+                    m_perfOutput->enableInput(true);
+                });
 
-    connect(m_perfRecord, &PerfRecord::recordingFinished, this, [this](const QString& fileLocation) {
-        appendOutput(tr("\nrecording finished after %1").arg(Util::formatTimeString(m_recordTimer.nsecsElapsed())));
-        m_resultsFile = fileLocation;
-        setError({});
-        recordingStopped();
-        ui->viewPerfRecordResultsButton->setEnabled(true);
-    });
+        connect(m_perfRecord, &PerfRecord::recordingFinished, this, [this](const QString& fileLocation) {
+            appendOutput(tr("\nrecording finished after %1").arg(Util::formatTimeString(m_recordTimer.nsecsElapsed())));
+            m_resultsFile = fileLocation;
+            setError({});
+            recordingStopped();
+            ui->viewPerfRecordResultsButton->setEnabled(true);
+        });
 
-    connect(m_perfRecord, &PerfRecord::recordingFailed, this, [this](const QString& errorMessage) {
-        if (m_recordTimer.isValid()) {
-            appendOutput(tr("\nrecording failed after %1: %2")
-                             .arg(Util::formatTimeString(m_recordTimer.nsecsElapsed()), errorMessage));
+        connect(m_perfRecord, &PerfRecord::recordingFailed, this, [this](const QString& errorMessage) {
+            if (m_recordTimer.isValid()) {
+                appendOutput(tr("\nrecording failed after %1: %2")
+                                 .arg(Util::formatTimeString(m_recordTimer.nsecsElapsed()), errorMessage));
+            } else {
+                appendOutput(tr("\nrecording failed: %1").arg(errorMessage));
+            }
+            setError(errorMessage);
+            recordingStopped();
+            ui->viewPerfRecordResultsButton->setEnabled(false);
+        });
+
+        connect(m_perfRecord, &PerfRecord::debuggeeCrashed, this, [this] {
+            ui->applicationRecordWarningMessage->setText(tr("Debugge crashed. Results may be unusable."));
+            ui->applicationRecordWarningMessage->show();
+        });
+
+        connect(m_perfRecord, &PerfRecord::recordingOutput, this, &RecordPage::appendOutput);
+
+        if (!m_perfRecord->canSampleCpu()) {
+            ui->sampleCpuCheckBox->hide();
+            ui->sampleCpuLabel->hide();
         } else {
-            appendOutput(tr("\nrecording failed: %1").arg(errorMessage));
+            ui->sampleCpuCheckBox->show();
+            ui->sampleCpuLabel->show();
         }
-        setError(errorMessage);
-        recordingStopped();
-        ui->viewPerfRecordResultsButton->setEnabled(false);
-    });
+    };
 
     connect(m_perfRecord, &PerfRecord::debuggeeCrashed, this, [this] {
         ui->applicationRecordWarningMessage->setText(tr("Debugge crashed. Results may be unusable."));
         ui->applicationRecordWarningMessage->show();
     });
 
-    connect(m_perfRecord, &PerfRecord::recordingOutput, this, &RecordPage::appendOutput);
+    // populate remove target combobox
+    onRemoteDevicesChanged();
+
+    connect(ui->remoteTargetComboBox, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this, perfRecordChanged](int index) {
+                using namespace ThreadWeaver;
+
+                auto geometry = m_loadingIndicator->geometry();
+                geometry.setWidth(width() / 2);
+                geometry.moveCenter(rect().center());
+                m_loadingIndicator->setGeometry(geometry);
+
+                stream() << make_job([this, index, perfRecordChanged] {
+                    m_loadingIndicator->setVisible(true);
+                    if (index == 0) {
+                        m_perfRecord = new PerfRecord(this);
+                    } else {
+                        auto recordSsh = new PerfRecordSSH(this);
+                        m_perfRecord = recordSsh;
+                    }
+                    perfRecordChanged();
+
+                    m_loadingIndicator->setVisible(false);
+                });
+            });
 
     m_processModel = new ProcessModel(this);
     m_processProxyModel = new ProcessFilterModel(this);
@@ -367,16 +428,6 @@ RecordPage::RecordPage(QWidget* parent)
     ResultsUtil::connectFilter(ui->processesFilterBox, m_processProxyModel);
 
     connect(m_watcher, &QFutureWatcher<ProcDataList>::finished, this, &RecordPage::updateProcessesFinished);
-
-    if (m_perfRecord->currentUsername() == QLatin1String("root")) {
-        ui->elevatePrivilegesCheckBox->setChecked(true);
-        ui->elevatePrivilegesCheckBox->setEnabled(false);
-    } else if (m_perfRecord->sudoUtil().isEmpty() && !KF5Auth_FOUND) {
-        ui->elevatePrivilegesCheckBox->setChecked(false);
-        ui->elevatePrivilegesCheckBox->setEnabled(false);
-        ui->elevatePrivilegesCheckBox->setText(
-            tr("(Note: Install pkexec, kdesudo, kdesu or KAuth to temporarily elevate perf privileges.)"));
-    }
 
     connect(ui->elevatePrivilegesCheckBox, &QCheckBox::toggled, this, &RecordPage::updateOffCpuCheckboxState);
 
@@ -419,37 +470,6 @@ RecordPage::RecordPage(QWidget* parent)
             ui->startRecordingButton->setChecked(true);
         }
     });
-
-    if (!m_perfRecord->canSampleCpu()) {
-        ui->sampleCpuCheckBox->hide();
-        ui->sampleCpuLabel->hide();
-    }
-    if (!m_perfRecord->canSwitchEvents()) {
-        ui->offCpuCheckBox->hide();
-        ui->offCpuLabel->hide();
-    }
-    if (!m_perfRecord->canUseAio()) {
-        ui->useAioCheckBox->hide();
-        ui->useAioLabel->hide();
-    }
-    if (!m_perfRecord->canCompress()) {
-        ui->compressionComboBox->hide();
-        ui->compressionLabel->hide();
-    } else {
-        ui->compressionComboBox->addItem(tr("Disabled"), -1);
-        ui->compressionComboBox->addItem(tr("Enabled (Default Level)"), 0);
-        ui->compressionComboBox->addItem(tr("Level 1 (Fastest)"), 1);
-        for (int i = 2; i <= 21; ++i)
-            ui->compressionComboBox->addItem(tr("Level %1").arg(i), 0);
-        ui->compressionComboBox->addItem(tr("Level 22 (Slowest)"), 22);
-
-        ui->compressionComboBox->setCurrentIndex(1);
-        const auto defaultLevel = ui->compressionComboBox->currentData().toInt();
-        const auto level = config().readEntry(QStringLiteral("compressionLevel"), defaultLevel);
-        const auto index = ui->compressionComboBox->findData(level);
-        if (index != -1)
-            ui->compressionComboBox->setCurrentIndex(index);
-    }
 
     showRecordPage();
 
@@ -635,6 +655,10 @@ void RecordPage::stopRecording()
 
 void RecordPage::onApplicationNameChanged(const QString& filePath)
 {
+    // don't check if we record on a remote device
+    if (ui->remoteTargetComboBox->currentIndex() != 0)
+        return;
+
     QFileInfo application(KShell::tildeExpand(filePath));
     if (!application.exists()) {
         application.setFile(QStandardPaths::findExecutable(filePath));
@@ -771,8 +795,8 @@ void RecordPage::updateRecordType()
 
 void RecordPage::updateOffCpuCheckboxState()
 {
-    const bool enableOffCpuProfiling =
-        (ui->elevatePrivilegesCheckBox->isChecked() || m_perfRecord->canProfileOffCpu()) && m_perfRecord->canSwitchEvents();
+    const bool enableOffCpuProfiling = (ui->elevatePrivilegesCheckBox->isChecked() || m_perfRecord->canProfileOffCpu())
+        && m_perfRecord->canSwitchEvents();
 
     if (enableOffCpuProfiling == ui->offCpuCheckBox->isEnabled()) {
         return;

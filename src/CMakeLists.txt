@@ -30,6 +30,7 @@ set(HOTSPOT_SRCS
     main.cpp
     parsers/perf/perfparser.cpp
     perfrecord.cpp
+    perfrecordssh.cpp
     mainwindow.cpp
     flamegraph.cpp
     aboutdialog.cpp
@@ -52,6 +53,7 @@ set(HOTSPOT_SRCS
     perfoutputwidgettext.cpp
     perfoutputwidgetkonsole.cpp
     costcontextmenu.cpp
+    ssh.cpp
     # ui files:
     mainwindow.ui
     aboutdialog.ui

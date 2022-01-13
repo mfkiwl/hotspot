@@ -411,6 +411,11 @@ QString PerfRecord::sudoUtil()
     return {};
 }
 
+bool PerfRecord::canElevatePrivileges()
+{
+    return !sudoUtil().isEmpty() || KF5Auth_FOUND;
+}
+
 QString PerfRecord::currentUsername()
 {
     return KUser().loginName();

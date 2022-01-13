@@ -50,6 +50,25 @@
     </layout>
    </item>
    <item>
+    <widget class="QGroupBox" name="remoteTargetGroup">
+     <property name="title">
+      <string>Remote Target</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout_5">
+      <item row="0" column="0">
+       <widget class="QLabel" name="remoteTargetLabel">
+        <property name="text">
+         <string>Remote Target:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="remoteTargetComboBox"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="launchAppBox">
      <property name="title">
       <string>Launch Application</string>
@@ -72,11 +91,11 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="KUrlComboRequester" name="applicationName">
+       <widget class="KUrlComboRequester" name="applicationName" native="true">
         <property name="toolTip">
          <string>Path to the application to be recorded</string>
         </property>
-        <property name="text">
+        <property name="text" stdset="0">
          <string/>
         </property>
        </widget>
@@ -118,7 +137,7 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="KUrlRequester" name="workingDirectory">
+       <widget class="KUrlRequester" name="workingDirectory" native="true">
         <property name="toolTip">
          <string>Directory to store the perf data file while recording</string>
         </property>
@@ -264,8 +283,8 @@
        </widget>
       </item>
       <item row="3" column="0" colspan="2">
-       <widget class="KCollapsibleGroupBox" name="perfOptionsBox2">
-        <property name="title">
+       <widget class="KCollapsibleGroupBox" name="perfOptionsBox2" native="true">
+        <property name="title" stdset="0">
          <string>Advanced</string>
         </property>
         <layout class="QFormLayout" name="formLayout_3">
@@ -286,7 +305,7 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="KUrlRequester" name="outputFile">
+          <widget class="KUrlRequester" name="outputFile" native="true">
            <property name="toolTip">
             <string>Path to the file location, where perf will write its output to</string>
            </property>
@@ -517,27 +536,21 @@
    </item>
    <item>
     <widget class="KMessageWidget" name="applicationRecordErrorMessage">
-     <property name="wordWrap">
+     <property name="wordWrap" stdset="0">
       <bool>true</bool>
      </property>
-     <property name="closeButtonVisible">
+     <property name="closeButtonVisible" stdset="0">
       <bool>false</bool>
-     </property>
-     <property name="messageType">
-      <enum>KMessageWidget::Error</enum>
      </property>
     </widget>
    </item>
    <item>
     <widget class="KMessageWidget" name="applicationRecordWarningMessage">
-     <property name="wordWrap">
+     <property name="wordWrap" stdset="0">
       <bool>true</bool>
      </property>
-     <property name="closeButtonVisible">
+     <property name="closeButtonVisible" stdset="0">
       <bool>false</bool>
-     </property>
-     <property name="messageType">
-      <enum>KMessageWidget::Warning</enum>
      </property>
     </widget>
    </item>
@@ -599,11 +612,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KUrlComboRequester</class>
-   <extends>KUrlRequester</extends>
-   <header>kurlrequester.h</header>
-  </customwidget>
-  <customwidget>
    <class>KUrlRequester</class>
    <extends>QWidget</extends>
    <header>kurlrequester.h</header>
@@ -619,6 +627,11 @@
    <extends>QFrame</extends>
    <header>kmessagewidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KUrlComboRequester</class>
+   <extends>KUrlRequester</extends>
+   <header>kurlrequester.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

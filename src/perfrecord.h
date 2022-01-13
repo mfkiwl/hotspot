@@ -20,17 +20,19 @@ public:
     explicit PerfRecord(QObject* parent = nullptr);
     ~PerfRecord();
 
-    void record(const QStringList& perfOptions, const QString& outputPath, bool elevatePrivileges,
-                const QString& exePath, const QStringList& exeOptions, const QString& workingDirectory = QString());
-    void record(const QStringList& perfOptions, const QString& outputPath, bool elevatePrivileges,
-                const QStringList& pids);
-    void recordSystem(const QStringList& perfOptions, const QString& outputPath);
+    virtual void record(const QStringList& perfOptions, const QString& outputPath, bool elevatePrivileges,
+                        const QString& exePath, const QStringList& exeOptions,
+                        const QString& workingDirectory = QString());
+    virtual void record(const QStringList& perfOptions, const QString& outputPath, bool elevatePrivileges,
+                        const QStringList& pids);
+    virtual void recordSystem(const QStringList& perfOptions, const QString& outputPath);
 
     const QString perfCommand();
-    void stopRecording();
-    void sendInput(const QByteArray& input);
+    virtual void stopRecording();
+    virtual void sendInput(const QByteArray& input);
 
     virtual QString sudoUtil();
+    virtual bool canElevatePrivileges();
     virtual QString currentUsername();
 
     virtual bool canTrace(const QString& path);

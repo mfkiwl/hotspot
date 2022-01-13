@@ -86,6 +86,7 @@ private:
 
     ProcessModel* m_processModel;
     ProcessFilterModel* m_processProxyModel;
+    QWidget* m_loadingIndicator;
 
     QFutureWatcher<ProcDataList>* m_watcher;
 };
