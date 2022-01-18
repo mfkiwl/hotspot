@@ -54,6 +54,9 @@ signals:
     void homeButtonClicked();
     void openFile(QString filePath);
 
+public slots:
+    void onRemoteDevicesChanged();
+
 private slots:
     void onApplicationNameChanged(const QString& filePath);
     void onStartRecordingButtonClicked(bool checked);

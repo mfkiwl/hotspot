@@ -221,4 +221,13 @@ void Settings::loadFromFile()
     connect(this, &Settings::lastUsedEnvironmentChanged, this, [sharedConfig](const QString& envName) {
         sharedConfig->group("PerfPaths").writeEntry("lastUsed", envName);
     });
+
+    const auto askpass = QStandardPaths::findExecutable(QStringLiteral("ksshaskpass"));
+    setSshaskPassPath(sharedConfig->group("SSH").readEntry("sshaskpass", askpass));
+}
+
+void Settings::setSshaskPassPath(const QString& sshaskpath)
+{
+    m_sshaskPassPath = sshaskpath;
+    emit sshaskPassChanged(m_sshaskPassPath);
 }

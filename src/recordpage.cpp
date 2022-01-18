@@ -813,3 +813,17 @@ void RecordPage::updateOffCpuCheckboxState()
         ui->offCpuCheckBox->setChecked(config().readEntry(QStringLiteral("offCpuProfiling"), false));
     }
 }
+
+void RecordPage::onRemoteDevicesChanged()
+{
+    ui->remoteTargetComboBox->clear();
+    ui->remoteTargetComboBox->addItem(QStringLiteral("localhost"));
+
+    const auto deviceConfig = KSharedConfig::openConfig()->group("devices");
+    const auto devices = deviceConfig.groupList();
+    for (const auto& device : devices) {
+        if (deviceConfig.hasGroup(device)) {
+            ui->remoteTargetComboBox->addItem(device);
+        }
+    }
+}

@@ -139,6 +139,11 @@ public:
         return m_lastUsedEnvironment;
     }
 
+    QString sshaskPassPath() const
+    {
+        return m_sshaskPassPath;
+    }
+
     void loadFromFile();
 
 signals:
@@ -158,6 +163,7 @@ signals:
     void objdumpChanged(const QString& objdump);
     void callgraphChanged();
     void lastUsedEnvironmentChanged(const QString& envName);
+    void sshaskPassChanged(const QString& path);
 
 public slots:
     void setPrettifySymbols(bool prettifySymbols);
@@ -178,6 +184,7 @@ public slots:
     void setCallgraphColors(const QColor& active, const QColor& inactive);
     void setCostAggregation(Settings::CostAggregation costAggregation);
     void setLastUsedEnvironment(const QString& envName);
+    void setSshaskPassPath(const QString& sshaskpath);
 
 private:
     Settings() = default;
@@ -199,6 +206,7 @@ private:
     QString m_appPath;
     QString m_arch;
     QString m_objdump;
+    QString m_sshaskPassPath;
 
     QString m_lastUsedEnvironment;
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "perfrecord.h"
+#include <QProcess>
 
 class QFile;
 
@@ -17,6 +18,11 @@ class PerfRecordSSH : public PerfRecord
 public:
     PerfRecordSSH(QObject* parent = nullptr);
     ~PerfRecordSSH();
+
+    void setDeviceName(const QString& device)
+    {
+        m_deviceName = device;
+    }
 
     void record(const QStringList& perfOptions, const QString& outputPath, bool elevatePrivileges,
                 const QString& exePath, const QStringList& exeOptions, const QString& workingDirectory) override;
@@ -50,6 +56,6 @@ private:
 
     QProcess* m_recordProcess = nullptr;
     QFile* m_outputFile;
-    QString m_hostname;
+    QString m_deviceName;
     bool m_userTerminated = false;
 };

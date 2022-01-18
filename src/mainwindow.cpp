@@ -128,6 +128,8 @@ MainWindow::MainWindow(QWidget* parent)
         settings->setObjdump(m_settingsDialog->objdump());
     });
 
+    connect(m_settingsDialog, &QDialog::accepted, m_recordPage, &RecordPage::onRemoteDevicesChanged);
+
     connect(settings, &Settings::sysrootChanged, m_resultsPage, &ResultsPage::setSysroot);
     connect(settings, &Settings::appPathChanged, m_resultsPage, &ResultsPage::setAppPath);
     connect(settings, &Settings::objdumpChanged, m_resultsPage, &ResultsPage::setObjdump);
