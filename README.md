@@ -423,6 +423,12 @@ hotspot currently only shows the name of the tracepoints in the timeline.
 
 ![hotspot tracepoints](screenshots/tracepoints.png?raw=true "hotspot tracepoints")
 
+### SSH
+
+Hotspot can use ssh to run perf on remote machines. After adding a host in the
+settings dialog, you can select it on the record page.
+This requires an installed ssh binary.
+
 ## Known Issues
 
 If anything breaks in the above and the output is less usable than `perf report`, please
