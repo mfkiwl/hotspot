@@ -160,7 +160,7 @@ void rememberApplication(const QString& application, const QString& appParameter
     rememberCombobox(config(), QStringLiteral("applications"), application, combo);
 }
 }
-
+#include <QThread>
 RecordPage::RecordPage(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::RecordPage)
@@ -395,18 +395,19 @@ RecordPage::RecordPage(QWidget* parent)
                 geometry.moveCenter(rect().center());
                 m_loadingIndicator->setGeometry(geometry);
 
-                stream() << make_job([this, index, perfRecordChanged] {
-                    m_loadingIndicator->setVisible(true);
-                    if (index == 0) {
-                        m_perfRecord = new PerfRecord(this);
-                    } else {
-                        auto recordSsh = new PerfRecordSSH(this);
-                        m_perfRecord = recordSsh;
-                    }
-                    perfRecordChanged();
+                // stream() << make_job([this, index, perfRecordChanged] {
+                m_loadingIndicator->setVisible(true);
+                if (index == 0) {
+                    m_perfRecord = new PerfRecord(this);
+                } else {
+                    auto recordSsh = new PerfRecordSSH(this);
+                    recordSsh->setDeviceName(ui->remoteTargetComboBox->currentText());
+                    m_perfRecord = recordSsh;
+                }
+                perfRecordChanged();
 
-                    m_loadingIndicator->setVisible(false);
-                });
+                m_loadingIndicator->setVisible(false);
+                //});
             });
 
     m_processModel = new ProcessModel(this);
