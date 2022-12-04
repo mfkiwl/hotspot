@@ -164,7 +164,7 @@ int main(int argc, char** argv)
         applyArg(arch, &Settings::setArch);
     };
 
-    const auto settings = Settings::instance();
+    auto* settings = Settings::instance();
     settings->loadFromFile();
     applyCliArgs(settings);
 
@@ -192,7 +192,7 @@ int main(int argc, char** argv)
     // we now only have at most one file
     Q_ASSERT(files.size() <= 1);
 
-    auto window = new MainWindow;
+    auto* window = new MainWindow;
     if (!files.isEmpty()) {
         auto file = files.constFirst();
         if (QFileInfo(file).isDir()) {
