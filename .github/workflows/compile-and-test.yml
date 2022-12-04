@@ -29,8 +29,8 @@ jobs:
         submodules: recursive
 
     - name: Configure
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja >
-          -DCMAKE_CXX_FLAGS_INIT="-g -fsanitize=address,undefined -Werror" >
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
+          -DCMAKE_CXX_FLAGS_INIT="-g -fsanitize=address,undefined -Werror"
           -DCMAKE_C_FLAGS_INIT="-g -fsanitize=address,undefined -Werror"
 
     - name: Build
@@ -75,7 +75,7 @@ jobs:
         submodules: recursive
 
     - name: Configure
-      run: cmake --preset dev-asan >
+      run: cmake --preset dev-asan
            -DCMAKE_CXX_FLAGS_INIT=-Werror -DCMAKE_C_FLAGS_INIT=-Werror
 
     - name: Build
@@ -106,6 +106,35 @@ jobs:
     - name: Test
       run: ctest --preset dev-clazy
 
+  archlinux-clang-tidy:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+
+    runs-on: ubuntu-latest
+    container: ghcr.io/kdab/hotspot-archlinux-dependencies
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: cmake --preset dev-clazy
+
+    - name: Analyze
+      run: cd build-dev-clazy &&
+           ninja -t targets all | grep "mocs_compilation.cpp:" | cut -f1 -d':' | xargs ninja &&
+           run-clang-tidy -export-fixes /tmp/fixits.yaml -q -j $(nproc) -p . src/ 3rdparty/ &&
+           [ ! -s /tmp/fixits.yaml ]
+
+    - name: Upload Fixits
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: clang-tidy-fixits
+        path: /tmp/fixits.yaml
+
   fedora34:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
@@ -120,8 +149,8 @@ jobs:
         submodules: recursive
 
     - name: Configure
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja >
-          -DCMAKE_CXX_FLAGS_INIT="-g -fsanitize=address,undefined -Werror" >
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
+          -DCMAKE_CXX_FLAGS_INIT="-g -fsanitize=address,undefined -Werror"
           -DCMAKE_C_FLAGS_INIT="-g -fsanitize=address,undefined -Werror"
 
     - name: Build
