@@ -83,7 +83,7 @@ int main(int argc, char** argv)
     initRCCIconTheme();
 #endif
 
-    app.setWindowIcon(QIcon(QStringLiteral(":/images/icons/512-hotspot_app_icon.png")));
+    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/images/icons/512-hotspot_app_icon.png")));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Linux perf GUI for performance analysis."));
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    const auto originalArguments = app.arguments();
+    const auto originalArguments = QCoreApplication::arguments();
     // remove leading executable name and trailing positional arguments
     const auto minimalArguments = originalArguments.mid(1, originalArguments.size() - 1 - files.size());
 
@@ -200,26 +200,26 @@ int main(int argc, char** argv)
         }
 
         if (parser.isSet(exportTo)) {
-            auto showErrorAndQuit = [&app, file](const QString& errorMessage) {
+            auto showErrorAndQuit = [file](const QString& errorMessage) {
                 QTextStream err(stderr);
                 err << errorMessage << Qt::endl;
-                app.exit(1);
+                QCoreApplication::exit(1);
             };
             QObject::connect(window, &MainWindow::openFileError, &app, showErrorAndQuit);
             QObject::connect(window, &MainWindow::exportFailed, &app, showErrorAndQuit);
-            QObject::connect(window, &MainWindow::exportFinished, &app, [&app, file](const QUrl& url) {
+            QObject::connect(window, &MainWindow::exportFinished, &app, [file](const QUrl& url) {
                 QTextStream out(stdout);
                 out << QCoreApplication::translate("main", "Input file %1 exported to %2")
                            .arg(file, url.toDisplayString(QUrl::PrettyDecoded | QUrl::PreferLocalFile))
                     << Qt::endl;
-                app.exit(0);
+                QCoreApplication::exit(0);
             });
             auto destination = QUrl::fromUserInput(parser.value(exportTo), QDir::currentPath(), QUrl::AssumeLocalFile);
             window->saveAs(file, destination);
-            return app.exec();
-        } else {
-            window->openFile(file);
+            return QCoreApplication::exec();
         }
+
+        window->openFile(file);
     } else {
         // open perf.data in current CWD, if it exists
         // this brings hotspot closer to the behavior of "perf report"
@@ -230,5 +230,5 @@ int main(int argc, char** argv)
     }
     window->show();
 
-    return app.exec();
+    return QCoreApplication::exec();
 }
