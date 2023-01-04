@@ -78,7 +78,7 @@ set_package_properties(
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 find_package(
-    KF5
+    KF5 5.42.0
     COMPONENTS ThreadWeaver
                ConfigWidgets
                CoreAddons
