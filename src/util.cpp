@@ -435,3 +435,18 @@ KParts::ReadOnlyPart* Util::createPart(const QString& pluginName)
     return service->createInstance<KParts::ReadOnlyPart>();
 #endif
 }
+
+QString Util::sudoUtil()
+{
+    const auto commands = {
+        QStringLiteral("pkexec"), QStringLiteral("kdesudo"), QStringLiteral("kdesu"),
+        // gksudo / gksu seem to close stdin and thus the elevate script doesn't wait on read
+    };
+    for (const auto& cmd : commands) {
+        QString util = QStandardPaths::findExecutable(cmd);
+        if (!util.isEmpty()) {
+            return util;
+        }
+    }
+    return {};
+}

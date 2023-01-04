@@ -17,6 +17,7 @@ class UnwindSettingsPage;
 class FlamegraphSettingsPage;
 class DebuginfodPage;
 class CallgraphSettingsPage;
+class PerfSettingsPage;
 }
 
 class MultiConfigWidget;
@@ -42,11 +43,13 @@ public:
     void keyPressEvent(QKeyEvent* event) override;
 
 private:
+    void addPerfSettingsPage();
     void addPathSettingsPage();
     void addFlamegraphPage();
     void addDebuginfodPage();
     void addCallgraphPage();
 
+    std::unique_ptr<Ui::PerfSettingsPage> perfPage;
     std::unique_ptr<Ui::UnwindSettingsPage> unwindPage;
     std::unique_ptr<Ui::FlamegraphSettingsPage> flamegraphPage;
     std::unique_ptr<Ui::DebuginfodPage> debuginfodPage;

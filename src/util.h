@@ -72,4 +72,6 @@ QString elideSymbol(const QString& symbolText, const QFontMetrics& metrics, int 
 QProcessEnvironment appImageEnvironment();
 
 KParts::ReadOnlyPart* createPart(const QString& pluginName);
+
+QString sudoUtil();
 }

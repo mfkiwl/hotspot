@@ -14,6 +14,9 @@
 
 #include "processlist.h"
 
+// TODO fix RecordType
+#include "recordhost.h"
+
 class QTimer;
 class QTemporaryFile;
 
@@ -26,19 +29,11 @@ class ProcessModel;
 class ProcessFilterModel;
 class MultiConfigWidget;
 class PerfOutputWidget;
+class RecordHost;
 
 namespace KParts {
 class ReadOnlyPart;
 }
-
-enum RecordType
-{
-    LaunchApplication = 0,
-    AttachToProcess,
-    ProfileSystem,
-    NUM_RECORD_TYPES
-};
-Q_DECLARE_METATYPE(RecordType)
 
 class RecordPage : public QWidget
 {
@@ -57,12 +52,9 @@ signals:
 private slots:
     void onApplicationNameChanged(const QString& filePath);
     void onStartRecordingButtonClicked(bool checked);
-    void onWorkingDirectoryNameChanged(const QString& folderPath);
-    void onViewPerfRecordResultsButtonClicked();
     void onOutputFileNameChanged(const QString& filePath);
     void onOutputFileUrlChanged(const QUrl& fileUrl);
     void onOutputFileNameSelected(const QString& filePath);
-    void updateOffCpuCheckboxState();
 
     void updateProcesses();
     void updateProcessesFinished();
@@ -75,6 +67,7 @@ private:
 
     QScopedPointer<Ui::RecordPage> ui;
 
+    RecordHost* m_recordHost;
     PerfRecord* m_perfRecord;
     QString m_resultsFile;
     QElapsedTimer m_recordTimer;

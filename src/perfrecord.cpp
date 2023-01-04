@@ -106,6 +106,11 @@ static bool privsAlreadyElevated()
     return isElevated;
 }
 
+QStringList PerfRecord::offCpuProfilingOptions()
+{
+    return {QStringLiteral("--switch-events"), QStringLiteral("--event"), QStringLiteral("sched:sched_switch")};
+}
+
 void PerfRecord::startRecording(bool elevatePrivileges, const QStringList& perfOptions, const QString& outputPath,
                                 const QStringList& recordOptions, const QString& workingDirectory)
 {
@@ -115,7 +120,7 @@ void PerfRecord::startRecording(bool elevatePrivileges, const QStringList& perfO
         // then parse its output and once we get the "waiting..." line the privileges got elevated
         // in that case, we can continue to start perf and quit the elevate_perf_privileges.sh script
         // once perf has started
-        const auto sudoBinary = sudoUtil();
+        const auto sudoBinary = Util::sudoUtil();
         if (sudoBinary.isEmpty()) {
             emit recordingFailed(tr("No sudo utility found. Please install pkexec, kdesudo or kdesu."));
             return;
@@ -394,108 +399,4 @@ void PerfRecord::sendInput(const QByteArray& input)
 {
     Q_ASSERT(m_perfRecordProcess);
     m_perfRecordProcess->write(input);
-}
-
-QString PerfRecord::sudoUtil()
-{
-    const auto commands = {
-        QStringLiteral("pkexec"), QStringLiteral("kdesudo"), QStringLiteral("kdesu"),
-        // gksudo / gksu seem to close stdin and thus the elevate script doesn't wait on read
-    };
-    for (const auto& cmd : commands) {
-        QString util = QStandardPaths::findExecutable(cmd);
-        if (!util.isEmpty()) {
-            return util;
-        }
-    }
-    return {};
-}
-
-QString PerfRecord::currentUsername()
-{
-    return KUser().loginName();
-}
-
-bool PerfRecord::canTrace(const QString& path)
-{
-    QFileInfo info(QLatin1String("/sys/kernel/debug/tracing/") + path);
-    if (!info.isDir() || !info.isReadable()) {
-        return false;
-    }
-    QFile paranoid(QStringLiteral("/proc/sys/kernel/perf_event_paranoid"));
-    return paranoid.open(QIODevice::ReadOnly) && paranoid.readAll().trimmed() == "-1";
-}
-
-static QByteArray perfOutput(const QStringList& arguments)
-{
-    QProcess process;
-
-    auto reportError = [&]() {
-        qWarning() << "Failed to run perf" << process.arguments() << process.error() << process.errorString()
-                   << process.readAllStandardError();
-    };
-
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert(QStringLiteral("LANG"), QStringLiteral("C"));
-    process.setProcessEnvironment(env);
-
-    QObject::connect(&process, &QProcess::errorOccurred, &process, reportError);
-    process.start(QStringLiteral("perf"), arguments);
-    if (!process.waitForFinished(1000) || process.exitCode() != 0)
-        reportError();
-    return process.readAllStandardOutput();
-}
-
-static QByteArray perfRecordHelp()
-{
-    static const QByteArray recordHelp = []() {
-        static QByteArray help = perfOutput({QStringLiteral("record"), QStringLiteral("--help")});
-        if (help.isEmpty()) {
-            // no man page installed, assume the best
-            help = "--sample-cpu --switch-events";
-        }
-        return help;
-    }();
-    return recordHelp;
-}
-
-static QByteArray perfBuildOptions()
-{
-    static const QByteArray buildOptions = perfOutput({QStringLiteral("version"), QStringLiteral("--build-options")});
-    return buildOptions;
-}
-
-bool PerfRecord::canProfileOffCpu()
-{
-    return canTrace(QStringLiteral("events/sched/sched_switch"));
-}
-
-QStringList PerfRecord::offCpuProfilingOptions()
-{
-    return {QStringLiteral("--switch-events"), QStringLiteral("--event"), QStringLiteral("sched:sched_switch")};
-}
-
-bool PerfRecord::canSampleCpu()
-{
-    return perfRecordHelp().contains("--sample-cpu");
-}
-
-bool PerfRecord::canSwitchEvents()
-{
-    return perfRecordHelp().contains("--switch-events");
-}
-
-bool PerfRecord::canUseAio()
-{
-    return perfBuildOptions().contains("aio: [ on  ]");
-}
-
-bool PerfRecord::canCompress()
-{
-    return Zstd_FOUND && perfBuildOptions().contains("zstd: [ on  ]");
-}
-
-bool PerfRecord::isPerfInstalled()
-{
-    return !QStandardPaths::findExecutable(QStringLiteral("perf")).isEmpty();
 }

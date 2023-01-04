@@ -30,19 +30,7 @@ public:
     void stopRecording();
     void sendInput(const QByteArray& input);
 
-    static QString sudoUtil();
-    static QString currentUsername();
-
-    static bool canTrace(const QString& path);
-    static bool canProfileOffCpu();
-    static bool canSampleCpu();
-    static bool canSwitchEvents();
-    static bool canUseAio();
-    static bool canCompress();
-
     static QStringList offCpuProfilingOptions();
-
-    static bool isPerfInstalled();
 
 signals:
     void recordingStarted(const QString& perfBinary, const QStringList& arguments);

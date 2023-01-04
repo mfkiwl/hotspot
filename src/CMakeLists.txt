@@ -52,6 +52,7 @@ set(HOTSPOT_SRCS
     perfoutputwidgettext.cpp
     perfoutputwidgetkonsole.cpp
     costcontextmenu.cpp
+    recordhost.cpp
     # ui files:
     mainwindow.ui
     aboutdialog.ui
@@ -71,6 +72,7 @@ set(HOTSPOT_SRCS
     callgraphwidget.ui
     callgraphsettingspage.ui
     frequencypage.ui
+    perfsettingspage.ui
     # resources:
     resources.qrc
 )

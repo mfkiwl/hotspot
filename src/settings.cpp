@@ -218,7 +218,20 @@ void Settings::loadFromFile()
         setArch(currentConfig.readEntry("arch", ""));
         setObjdump(currentConfig.readEntry("objdump", ""));
     }
+
+    setPerfPath(sharedConfig->group("Perf").readEntry("path", ""));
+    connect(this, &Settings::perfPathChanged, this,
+            [sharedConfig](const QString& perfPath) { sharedConfig->group("Perf").writeEntry("path", perfPath); });
+
     connect(this, &Settings::lastUsedEnvironmentChanged, this, [sharedConfig](const QString& envName) {
         sharedConfig->group("PerfPaths").writeEntry("lastUsed", envName);
     });
+}
+
+void Settings::setPerfPath(const QString& path)
+{
+    if (m_perfPath != path) {
+        m_perfPath = path;
+        emit perfPathChanged(m_perfPath);
+    }
 }

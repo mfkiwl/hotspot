@@ -4,6 +4,7 @@ include_directories(../../src/parsers/perf)
 
 ecm_add_test(
     ../../src/perfrecord.cpp
+    ../../src/recordhost.cpp
     ../../src/settings.cpp
     ../../src/util.cpp
     ../../src/models/data.cpp

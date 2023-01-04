@@ -11,6 +11,7 @@
 #include "ui_callgraphsettingspage.h"
 #include "ui_debuginfodpage.h"
 #include "ui_flamegraphsettingspage.h"
+#include "ui_perfsettingspage.h"
 #include "ui_unwindsettingspage.h"
 
 #include "multiconfigwidget.h"
@@ -32,10 +33,16 @@ KConfigGroup config()
 {
     return KSharedConfig::openConfig()->group("PerfPaths");
 }
+
+QIcon icon()
+{
+    return QIcon::fromTheme(QStringLiteral("preferences-system-windows-behavior"));
+}
 }
 
 SettingsDialog::SettingsDialog(QWidget* parent)
     : KPageDialog(parent)
+    , perfPage(new Ui::PerfSettingsPage)
     , unwindPage(new Ui::UnwindSettingsPage)
     , flamegraphPage(new Ui::FlamegraphSettingsPage)
     , debuginfodPage(new Ui::DebuginfodPage)
@@ -43,6 +50,7 @@ SettingsDialog::SettingsDialog(QWidget* parent)
     , callgraphPage(new Ui::CallgraphSettingsPage)
 #endif
 {
+    addPerfSettingsPage();
     addPathSettingsPage();
     addFlamegraphPage();
     addDebuginfodPage();
@@ -123,12 +131,26 @@ QString SettingsDialog::objdump() const
     return unwindPage->lineEditObjdump->text();
 }
 
+void SettingsDialog::addPerfSettingsPage()
+{
+    auto page = new QWidget(this);
+    auto item = addPage(page, tr("Perf"));
+    item->setIcon(icon());
+
+    perfPage->setupUi(page);
+
+    connect(this, &KPageDialog::accepted, this, [this]() {
+        auto settings = Settings::instance();
+        settings->setPerfPath(perfPage->perfPathEdit->url().toLocalFile());
+    });
+}
+
 void SettingsDialog::addPathSettingsPage()
 {
     auto page = new QWidget(this);
     auto item = addPage(page, tr("Unwinding"));
     item->setHeader(tr("Unwind Options"));
-    item->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-behavior")));
+    item->setIcon(icon());
 
     unwindPage->setupUi(page);
 
@@ -215,7 +237,7 @@ void SettingsDialog::addFlamegraphPage()
     auto page = new QWidget(this);
     auto item = addPage(page, tr("Flamegraph"));
     item->setHeader(tr("Flamegraph Options"));
-    item->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-behavior")));
+    item->setIcon(icon());
 
     flamegraphPage->setupUi(page);
 
@@ -256,7 +278,7 @@ void SettingsDialog::addDebuginfodPage()
     auto page = new QWidget(this);
     auto item = addPage(page, tr("debuginfod"));
     item->setHeader(tr("debuginfod Urls"));
-    item->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-behavior")));
+    item->setIcon(icon());
 
     debuginfodPage->setupUi(page);
 
@@ -276,7 +298,7 @@ void SettingsDialog::addCallgraphPage()
     auto page = new QWidget(this);
     auto item = addPage(page, tr("Callgraph"));
     item->setHeader(tr("Callgraph Settings"));
-    item->setIcon(QIcon::fromTheme(QStringLiteral("preferences-system-windows-behavior")));
+    item->setIcon(icon());
 
     callgraphPage->setupUi(page);
 
