@@ -17,6 +17,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QProcess>
+#include <QShortcut>
 #include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QString>
@@ -171,6 +172,37 @@ ResultsDisassemblyPage::ResultsDisassemblyPage(CostContextMenu* costContextMenu,
         showDisassembly();
     });
 
+    auto searchShortcut = new QShortcut(QKeySequence::Find, this);
+    connect(searchShortcut, &QShortcut::activated, this, [this] {
+        ui->searchWidget->setVisible(true);
+        ui->searchEdit->setFocus();
+    });
+
+    connect(ui->closeSearch, &QPushButton::pressed, this, [this] { ui->searchWidget->setVisible(false); });
+
+    connect(ui->nextSearchResult, &QPushButton::pressed, this,
+            [this] { m_sourceCodeModel->findForward(ui->searchEdit->text(), m_searchResultIndex); });
+
+    connect(ui->prevSearchResult, &QPushButton::pressed, this,
+            [this] { m_sourceCodeModel->findBackwards(ui->searchEdit->text(), m_searchResultIndex); });
+
+    connect(m_sourceCodeModel, &SourceCodeModel::searchResultFound, this, [this](const QModelIndex& index) {
+        m_searchResultIndex = index;
+        ui->sourceCodeView->scrollTo(m_searchResultIndex, QAbstractItemView::ScrollHint::PositionAtCenter);
+        ui->searchResultWarning->hide();
+    });
+
+    // search if enter is pressed
+    connect(ui->searchEdit, &QLineEdit::returnPressed, ui->nextSearchResult, &QPushButton::pressed);
+
+    // I don't know how to show an error so I use a warning widget
+    // kate, ... set the backgroundcolor to red but I don't know how they do this
+    // google say ->setStylesheet("background: red");
+    connect(m_sourceCodeModel, &SourceCodeModel::noSearchResult, this, [this] {
+        ui->searchResultWarning->setText(tr("%1 was not found").arg(ui->searchEdit->text()));
+        ui->searchResultWarning->show();
+    });
+
 #if KF5SyntaxHighlighting_FOUND
     QStringList schemes;
 
@@ -261,7 +293,12 @@ void ResultsDisassemblyPage::showDisassembly()
         return isArm ? QStringLiteral("arm-linux-gnueabi-objdump") : QStringLiteral("objdump");
     };
 
+    // hide search
+    ui->searchWidget->hide();
+    ui->searchResultWarning->hide();
     ui->symbolNotFound->hide();
+    ui->searchEdit->clear();
+    m_searchResultIndex = {};
 
     showDisassembly(DisassemblyOutput::disassemble(objdump(), m_arch, m_symbolStack[m_stackIndex]));
 }

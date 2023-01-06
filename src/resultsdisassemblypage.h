@@ -83,6 +83,8 @@ private:
     CodeDelegate* m_disassemblyDelegate;
     CodeDelegate* m_sourceCodeDelegate;
 
+    QModelIndex m_searchResultIndex = {};
+
     QVector<Data::Symbol> m_symbolStack;
     int m_stackIndex = 0;
 };

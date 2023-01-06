@@ -230,3 +230,41 @@ void SourceCodeModel::setSysroot(const QString& sysroot)
 {
     m_sysroot = sysroot;
 }
+
+void SourceCodeModel::findForward(const QString& search, const QModelIndex& start)
+{
+    for (int i = 1; i < m_numLines; i++) {
+        // start searching at start and wrap around when you reach the end
+        int lineIndex = i + (start.isValid() ? start.row() : 0);
+        lineIndex %= m_numLines;
+
+        const auto block = m_document->findBlockByLineNumber(lineIndex + m_startLine);
+        if (!block.isValid())
+            continue;
+
+        if (block.text().contains(search)) {
+            emit searchResultFound(index(lineIndex, SourceCodeColumn));
+            return;
+        }
+    }
+    emit noSearchResult();
+}
+
+void SourceCodeModel::findBackwards(const QString& search, const QModelIndex& start)
+{
+    for (int i = m_numLines - 1; i > 0; i--) {
+        // same as above but we move in the other direction
+        int lineIndex = i + (start.isValid() ? start.row() : 0);
+        lineIndex %= m_numLines;
+
+        const auto block = m_document->findBlockByLineNumber(lineIndex + m_startLine);
+        if (!block.isValid())
+            continue;
+
+        if (block.text().contains(search)) {
+            emit searchResultFound(index(lineIndex, SourceCodeColumn));
+            return;
+        }
+    }
+    emit noSearchResult();
+}

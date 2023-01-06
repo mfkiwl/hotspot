@@ -80,7 +80,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="go-previous"/>
+         <iconset theme="go-previous">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -97,7 +98,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="go-next"/>
+         <iconset theme="go-next">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -141,6 +143,16 @@
           <number>0</number>
          </property>
          <item>
+          <widget class="KMessageWidget" name="searchResultWarning">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="messageType">
+            <enum>KMessageWidget::Warning</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QTreeView" name="sourceCodeView">
            <property name="alternatingRowColors">
             <bool>true</bool>
@@ -151,6 +163,63 @@
            <property name="uniformRowHeights">
             <bool>true</bool>
            </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="searchWidget" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLineEdit" name="searchEdit"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="nextSearchResult">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset theme="go-down">
+                <normaloff>.</normaloff>.</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="prevSearchResult">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset theme="go-up">
+                <normaloff>.</normaloff>.</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="closeSearch">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset theme="window-close">
+                <normaloff>.</normaloff>.</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>

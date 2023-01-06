@@ -66,9 +66,16 @@ public:
         FileLineRole,
     };
 
+signals:
+    void searchResultFound(const QModelIndex& index);
+    void noSearchResult();
+
 public slots:
     void updateHighlighting(int line);
     void setSysroot(const QString& sysroot);
+
+    void findForward(const QString& search, const QModelIndex& start);
+    void findBackwards(const QString& search, const QModelIndex& start);
 
 private:
     QString m_sysroot;
